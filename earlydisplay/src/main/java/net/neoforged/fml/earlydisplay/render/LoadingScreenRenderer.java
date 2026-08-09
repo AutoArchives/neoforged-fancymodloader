@@ -125,6 +125,19 @@ public class LoadingScreenRenderer implements AutoCloseable {
         scheduler.scheduleWithFixedDelay(() -> animationFrame++, 1, 50, TimeUnit.MILLISECONDS);
     }
 
+    /**
+     * Runs window event processing without allowing it to overlap background rendering. This is necessary on macOS,
+     * where dispatching a resize event updates the OpenGL context used by the render thread.
+     */
+    public void runWithBackgroundRenderingPaused(Runnable task) {
+        this.renderLock.acquireUninterruptibly();
+        try {
+            task.run();
+        } finally {
+            this.renderLock.release();
+        }
+    }
+
     private List<RenderElement> loadElements() {
         var elements = new ArrayList<RenderElement>();
 
